@@ -1,0 +1,6 @@
+create a express server and a smart contract for a IoT authentication system using blockchain. You have to follow the requirements below.
+
+1. The system should use the bubble of trust approach.
+2. The contract should allow registration and login using deviceId and password. However, only an admin will be able to register devices. Also both deviceId and password should be uint type.
+3. The express server should use the ethers library and it should also have separate routes for registration and login.
+

@@ -2,6 +2,7 @@ import {
   LOGIN_DEVICE_ERROR,
   LOGIN_DEVICE_LOADING,
   LOGIN_DEVICE_SUCCESS,
+  LOGOUT_DEVICE,
 } from "../reducers/types/authTypes";
 import { backendBaseUrl } from "../constants/generalConstants";
 import axios from "axios";
@@ -24,4 +25,11 @@ export const loginDevice = (details) => async (dispatch) => {
       payload: message,
     });
   }
+};
+
+export const logoutDevice = () => async (dispatch) => {
+  localStorage.removeItem("deviceInfo");
+  dispatch({
+    type: LOGOUT_DEVICE,
+  });
 };

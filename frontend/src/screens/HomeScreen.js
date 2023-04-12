@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { loginDevice } from "../actions/authAction";
+import { loginDevice, logoutDevice } from "../actions/authAction";
 import CustomModal from "../components/layout/CustomModal";
+import { useHistory } from "react-router-dom";
 const HomeScreen = () => {
   const dispatch = useDispatch();
-  const { login, error, deviceInfo } = useSelector(
+  const { loading, error, deviceInfo } = useSelector(
     (state) => state.deviceLogin
   );
   const [values, setValues] = useState({
@@ -14,10 +15,10 @@ const HomeScreen = () => {
   });
 
   const [openModal, setOpenModal] = useState(false);
-
+  const history = useHistory();
   useEffect(() => {
     if (deviceInfo) {
-      setOpenModal(true);
+      history.push("/communication");
     }
   }, [deviceInfo]);
 
@@ -32,6 +33,12 @@ const HomeScreen = () => {
         closeModal={() => setOpenModal(false)}
         title="Login Successful"
         text={`You have successfully logged in. You will be redirected soon`}
+      />
+      <CustomModal
+        isOpen={error ? true : false}
+        closeModal={() => dispatch(logoutDevice())}
+        title="Login Error"
+        text={error}
       />
       <div className="bg-white w-10/12 md:w-7/12 lg:w-4/12 rounded-md shadow-md p-3 py-7">
         <h2 className="font-bold text-center mb-3 text-2xl uppercase">
@@ -88,10 +95,11 @@ const HomeScreen = () => {
             />
           </div>
           <button
+            disabled={loading}
             className="bg-black p-2 text-white uppercase text-center px-10 hover:bg-black/80"
             type="submit"
           >
-            Login
+            {loading ? "Loading..." : "Login"}
           </button>
         </form>
       </div>

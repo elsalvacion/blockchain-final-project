@@ -15,10 +15,22 @@ contract Authentication {
         devices[int256(bubbleId)][int256(deviceId)] = Device(passwordHash, bubbleId);
     }
 
-    function login(int256 deviceId, uint256 password, uint256 bubbleId) external view returns (bool) {
-        uint256 passwordHash = uint256(keccak256(abi.encodePacked(password)));
-        return devices[int256(bubbleId)][int256(deviceId)].passwordHash == passwordHash;
+    function login(int256 deviceId, uint256 password, int256 bubbleId) external view returns (bool) {
+    require(deviceId >= 0, "Device ID cannot be negative");
+    require(password != 0, "Password cannot be empty");
+    require(bubbleId >= 0, "Bubble ID cannot be negative");
+
+    if (devices[bubbleId][deviceId].passwordHash == 0) {
+        revert("Device not registered");
     }
+
+    uint256 passwordHash = uint256(keccak256(abi.encodePacked(password)));
+    if (devices[bubbleId][deviceId].passwordHash != passwordHash) {
+        revert("Incorrect password");
+    }
+
+    return true;
+}
 
     mapping (int256 => mapping (int256 => mapping (uint256 => string))) private messages;
 

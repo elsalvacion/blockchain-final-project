@@ -3,21 +3,16 @@ const ethers = require("ethers");
 const fs = require("fs");
 const cors = require("cors");
 const morgan = require("morgan");
+require("dotenv").config();
 const app = express();
 app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
 const abi = fs.readFileSync("./Authentication_sol_Authentication.abi", "utf8");
-// const bytecode = fs.readFileSync(
-//   "./DeviceAuthentication_sol_DeviceAuthentication.bin",
-//   "utf8"
-// );
-const provider = new ethers.JsonRpcProvider("http://127.0.0.1:7545");
-const wallet = new ethers.Wallet(
-  "0xb517bde62ad1821234e01f9ca76300074c58f4710b0e14c139b928f99eb6de2b",
-  provider
-);
-const contractAddress = "0x9c5318Dfe5831a8375B0f2fa85595354c8D39d34";
+
+const provider = new ethers.JsonRpcProvider(process.env.PROVIDER_URL);
+const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+const contractAddress = process.env.CONTRACT_ADDRESS;
 const contract = new ethers.Contract(contractAddress, abi, wallet);
 
 app.post("/register", async (req, res) => {
@@ -31,7 +26,11 @@ app.post("/register", async (req, res) => {
     res.json({ msg: receipt });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.info.error.data.reason });
+    res.status(500).json({
+      msg: err.info.error.message
+        ? err.info.error.message.split("revert ")[1]
+        : "Blockchain Error",
+    });
   }
 });
 
@@ -46,8 +45,13 @@ app.post("/login", async (req, res) => {
 
     res.json({ msg: isLoggedIn });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.info.error.data.reason });
+    console.log(err);
+
+    res.status(500).json({
+      msg: err.info.error.message
+        ? err.info.error.message.split("revert ")[1]
+        : "Blockchain Error",
+    });
   }
 });
 
@@ -61,7 +65,11 @@ app.post("/send-message", async (req, res) => {
     res.send("Message sent successfully");
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.info.error.data.reason });
+    res.status(500).json({
+      msg: err.info.error.message
+        ? err.info.error.message.split("revert ")[1]
+        : "Blockchain Error",
+    });
   }
 });
 
@@ -72,8 +80,14 @@ app.post("/get-message", async (req, res) => {
     res.send({ message });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.info.error.data.reason });
+    res.status(500).json({
+      msg: err.info.error.message
+        ? err.info.error.message.split("revert ")[1]
+        : "Blockchain Error",
+    });
   }
 });
 
-app.listen(5000, () => console.log("Server running on http://localhost:5000"));
+app.listen(process.env.PORT, () =>
+  console.log(`Server running on port ${process.env.PORT}`)
+);

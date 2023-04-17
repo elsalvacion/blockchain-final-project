@@ -2,11 +2,19 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useHistory } from "react-router-dom";
 import { logoutDevice } from "../actions/authAction";
+import { sendMessage } from "../actions/messageAction";
+import CustomModal from "../components/layout/CustomModal";
+import { SEND_MESSAGE_RESET } from "../reducers/types/messageTypes";
 
-const CommunicationScreen = () => {
+const CommunicationScreen = ({ socket }) => {
   const { loading, error, deviceInfo } = useSelector(
     (state) => state.deviceLogin
   );
+  const {
+    loading: sending,
+    error: sendingError,
+    success,
+  } = useSelector((state) => state.sendMessage);
   const [sendMsgValues, setSendMsgValues] = useState({
     receiverId: "",
     bubbleId: "",
@@ -17,21 +25,40 @@ const CommunicationScreen = () => {
   useEffect(() => {
     if (!deviceInfo) {
       history.push("/");
+    } else {
+      // socket.emit("")
     }
   }, [deviceInfo]);
 
+  useEffect(() => {
+    setSendMsgValues({
+      receiverId: "",
+      bubbleId: "",
+      message: "",
+    });
+  }, [success]);
+
   const handleSendMsg = (e) => {
     e.preventDefault();
+    dispatch(sendMessage(sendMsgValues));
   };
 
   return (
-    <div className="bg-white p-3">
+    <div className="bg-white p-3 h-screen flex flex-col">
+      {success && (
+        <CustomModal
+          text={"Message sent successfully"}
+          title={"Message sent"}
+          isOpen={success}
+          closeModal={() => dispatch({ type: SEND_MESSAGE_RESET })}
+        />
+      )}
       <div className="flex items-center justify-end mb-6">
         <button onClick={() => dispatch(logoutDevice())} className="uppercase">
           Logout Device
         </button>
       </div>
-      <div className="flex flex-col lg:flex-row lg:items-stretch h-screen w-full">
+      <div className="flex-1 flex flex-col lg:flex-row lg:items-stretch w-full">
         <div className="flex-1 lg:border-r lg:border-green-500 p-3 lg:p-5">
           <div className="flex items-stretch h-full">
             <div className="w-4/12 border border-black">
@@ -74,6 +101,7 @@ const CommunicationScreen = () => {
                   required
                   type="text"
                   className="flex-1 border-black border outline-none p-2"
+                  placeholder="Enter message here..."
                 />
                 <button className="bg-gray-200 p-2 px-4 border-none outline-none">
                   SEND
@@ -122,7 +150,7 @@ const CommunicationScreen = () => {
             </div>
             <div className="my-7">
               <label className="mb-2 block">Message</label>
-              <textare
+              <textarea
                 required
                 className="border-black border outline-none p-2 rounded-sm block w-full h-40"
                 placeholder="Enter message here"
@@ -133,14 +161,15 @@ const CommunicationScreen = () => {
                     message: e.target.value,
                   })
                 }
-              ></textare>
+              ></textarea>
             </div>
+            {sendingError && <p className="text-red-500">{sendingError}</p>}
             <button
-              disabled={loading}
+              disabled={sending}
               className="bg-black p-2 text-white uppercase text-center px-10 hover:bg-black/80"
               type="submit"
             >
-              Send Message
+              {sending ? "Sending..." : "Send Message"}
             </button>
           </form>
         </div>

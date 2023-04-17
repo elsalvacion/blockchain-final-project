@@ -4,6 +4,9 @@ const fs = require("fs");
 const cors = require("cors");
 const morgan = require("morgan");
 require("dotenv").config();
+const http = require("http");
+const { Server } = require("socket.io"); // Add this
+
 const app = express();
 app.use(cors());
 app.use(morgan("dev"));
@@ -58,11 +61,14 @@ app.post("/login", async (req, res) => {
 app.post("/send-message", async (req, res) => {
   try {
     const { senderId, receiverId, bubbleId, message } = req.body;
-    const tx = await contract
-      .sendMessage(senderId, receiverId, bubbleId, message)
-      .connect(wallet);
+    const tx = await contract.sendMessage(
+      senderId,
+      receiverId,
+      bubbleId,
+      message
+    );
     await tx.wait();
-    res.send("Message sent successfully");
+    res.json({ msg: "Message sent successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({
@@ -73,11 +79,19 @@ app.post("/send-message", async (req, res) => {
   }
 });
 
-app.post("/get-message", async (req, res) => {
+app.post("/get-messages", async (req, res) => {
   try {
-    const { senderId, receiverId, bubbleId } = req.body;
-    const message = await contract.getMessage(senderId, receiverId, bubbleId);
-    res.send({ message });
+    const { deviceId, bubbleId } = req.body;
+    const messages = await contract.getMessages(deviceId, bubbleId);
+
+    // Convert BigInt values to strings
+    const messagesStr = {};
+    Object.entries(messages).forEach(([key, value]) => {
+      messagesStr[key] = value.toString();
+    });
+
+    // Return messages to client
+    res.json({ msg: messagesStr });
   } catch (err) {
     console.error(err);
     res.status(500).json({
@@ -88,6 +102,22 @@ app.post("/get-message", async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT, () =>
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: `http://localhost:${process.env.PORT}`,
+    methods: ["GET", "POST"],
+  },
+});
+
+// Add this
+// Listen for when the client connects via socket.io-client
+io.on("connection", (socket) => {
+  console.log(`User connected ${socket.id}`);
+  // We can write our socket event listeners in here...
+});
+
+server.listen(process.env.PORT, () =>
   console.log(`Server running on port ${process.env.PORT}`)
 );

@@ -4,3 +4,9 @@ create a express server and a smart contract for a IoT authentication system usi
 2. The contract should allow registration and login using deviceId and password. However, only an admin will be able to register devices. Also both deviceId and password should be uint type.
 3. The express server should use the ethers library and it should also have separate routes for registration and login.
 
+
+
+Add a getMessages method to the smart contract. You have to follow the requirements below.
+1. The method should take deviceId as an argument of type int256 
+2. The method should then fetch all the messages of that deviceId including the ones that it sent and those that are sent to it.
+3. The method should then return an array of structures and struct should have senderId, receiverId, receiverBubbleId, senderBubbleId, and message

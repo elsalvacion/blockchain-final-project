@@ -27,6 +27,27 @@ export const loginDevice = (details) => async (dispatch) => {
   }
 };
 
+export const registerDevice = (details) => async (dispatch) => {
+  try {
+    dispatch({
+      type: LOGIN_DEVICE_LOADING,
+    });
+    const { data } = await axios.post(`${backendBaseUrl}/register`, details);
+    localStorage.setItem("deviceInfo", JSON.stringify(details));
+    dispatch({
+      type: LOGIN_DEVICE_SUCCESS,
+      payload: details,
+    });
+  } catch (err) {
+    console.log(err);
+    const message = err.response.data.msg || err.response.data || err.response;
+    dispatch({
+      type: LOGIN_DEVICE_ERROR,
+      payload: message,
+    });
+  }
+};
+
 export const logoutDevice = () => async (dispatch) => {
   localStorage.removeItem("deviceInfo");
   dispatch({

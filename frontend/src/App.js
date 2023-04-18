@@ -3,12 +3,15 @@ import HomeScreen from "./screens/HomeScreen";
 import CommunicationScreen from "./screens/CommunicationScreen";
 import io from "socket.io-client";
 import { backendBaseUrl } from "./constants/generalConstants";
+import RegisterScreen from "./screens/RegisterScreen";
 const socket = io.connect(backendBaseUrl);
 const App = () => {
   return (
     <div className="h-screen bg-gray-300">
       <BrowserRouter>
         <Route exact path="/" component={() => <HomeScreen />} />
+        <Route exact path="/register" component={() => <RegisterScreen />} />
+
         <Route
           exact
           path="/communication"

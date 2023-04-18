@@ -58,51 +58,6 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.post("/send-message", async (req, res) => {
-  try {
-    const { senderId, receiverId, senderBubbleId, receiverBubbleId, message } =
-      req.body;
-    const tx = await contract.sendMessage(
-      senderId,
-      receiverId,
-      senderBubbleId,
-      receiverBubbleId,
-      message
-    );
-    await tx.wait();
-    res.json({ msg: "Message sent successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      msg: err.info.error.message
-        ? err.info.error.message.split("revert ")[1]
-        : "Blockchain Error",
-    });
-  }
-});
-
-app.post("/get-messages", async (req, res) => {
-  try {
-    const { deviceId } = req.body;
-    const messages = await contract.getMessagesSentTo(deviceId);
-    // Convert BigInt values to strings
-    const messagesStr = {};
-    Object.entries(messages).forEach(([key, value]) => {
-      messagesStr[key] = value.toString();
-    });
-
-    // Return messages to client
-    res.json({ msg: messagesStr });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      msg: err.info.error.message
-        ? err.info.error.message.split("revert ")[1]
-        : "Blockchain Error",
-    });
-  }
-});
-
 const server = http.createServer(app);
 
 const io = new Server(server, {

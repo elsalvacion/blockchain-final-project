@@ -85,7 +85,7 @@ const CommunicationScreen = ({ socket }) => {
           <h2 className="text-center uppercase font-bold mr-3 text-2xl mb-7">
             Incoming Messages
           </h2>
-          <table className="table-fixed border border-black">
+          <table className="table-auto border border-black w-full">
             <thead>
               <tr className="border border-black">
                 <th className="border border-black p-3">Sender ID</th>

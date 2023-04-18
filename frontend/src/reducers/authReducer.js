@@ -11,6 +11,7 @@ export const deviceLoginReducer = (state = {}, action) => {
       return {
         loading: true,
       };
+
     case LOGIN_DEVICE_SUCCESS:
       return {
         deviceInfo: action.payload,

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { loginDevice, logoutDevice } from "../actions/authAction";
+import { logoutDevice, registerDevice } from "../actions/authAction";
 import CustomModal from "../components/layout/CustomModal";
-import { useHistory, Link } from "react-router-dom";
-const HomeScreen = () => {
+import { useHistory } from "react-router-dom";
+const RegisterScreen = () => {
   const dispatch = useDispatch();
   const { loading, error, deviceInfo } = useSelector(
     (state) => state.deviceLogin
@@ -24,25 +24,25 @@ const HomeScreen = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(loginDevice(values));
+    dispatch(registerDevice(values));
   };
   return (
     <div className="w-full h-full flex items-center justify-center p-3">
       <CustomModal
         isOpen={openModal}
         closeModal={() => setOpenModal(false)}
-        title="Login Successful"
+        title="Registration Successful"
         text={`You have successfully logged in. You will be redirected soon`}
       />
       <CustomModal
         isOpen={error ? true : false}
         closeModal={() => dispatch(logoutDevice())}
-        title="Login Error"
+        title="Registration Error"
         text={error}
       />
       <div className="bg-white w-10/12 md:w-7/12 lg:w-4/12 rounded-md shadow-md p-3 py-7">
         <h2 className="font-bold text-center mb-3 text-2xl uppercase">
-          Device Login
+          Register Device
         </h2>
 
         <form onSubmit={handleSubmit}>
@@ -94,18 +94,12 @@ const HomeScreen = () => {
               }
             />
           </div>
-          <p className="mb-2">
-            Don't have an account?{" "}
-            <Link to="/register" className="underline">
-              Register
-            </Link>
-          </p>
           <button
             disabled={loading}
             className="bg-black p-2 text-white uppercase text-center px-10 hover:bg-black/80"
             type="submit"
           >
-            {loading ? "Loading..." : "Login"}
+            {loading ? "Loading..." : "Register"}
           </button>
         </form>
       </div>
@@ -113,4 +107,4 @@ const HomeScreen = () => {
   );
 };
 
-export default HomeScreen;
+export default RegisterScreen;

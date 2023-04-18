@@ -60,11 +60,13 @@ app.post("/login", async (req, res) => {
 
 app.post("/send-message", async (req, res) => {
   try {
-    const { senderId, receiverId, bubbleId, message } = req.body;
+    const { senderId, receiverId, senderBubbleId, receiverBubbleId, message } =
+      req.body;
     const tx = await contract.sendMessage(
       senderId,
       receiverId,
-      bubbleId,
+      senderBubbleId,
+      receiverBubbleId,
       message
     );
     await tx.wait();
@@ -81,9 +83,8 @@ app.post("/send-message", async (req, res) => {
 
 app.post("/get-messages", async (req, res) => {
   try {
-    const { deviceId, bubbleId } = req.body;
-    const messages = await contract.getMessages(deviceId, bubbleId);
-
+    const { deviceId } = req.body;
+    const messages = await contract.getMessagesSentTo(deviceId);
     // Convert BigInt values to strings
     const messagesStr = {};
     Object.entries(messages).forEach(([key, value]) => {
@@ -106,7 +107,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: `http://localhost:${process.env.PORT}`,
+    origin: `http://localhost:3000`,
     methods: ["GET", "POST"],
   },
 });
@@ -114,8 +115,33 @@ const io = new Server(server, {
 // Add this
 // Listen for when the client connects via socket.io-client
 io.on("connection", (socket) => {
-  console.log(`User connected ${socket.id}`);
-  // We can write our socket event listeners in here...
+  // send message
+  socket.on("send_message", async (data) => {
+    const { senderId, receiverId, senderBubbleId, receiverBubbleId, message } =
+      data;
+    const tx = await contract.sendMessage(
+      senderId,
+      receiverId,
+      senderBubbleId,
+      receiverBubbleId,
+      message
+    );
+    await tx.wait();
+
+    socket.emit(String(receiverId));
+  });
+
+  socket.on("get_messages", async (data) => {
+    const { deviceId } = data;
+    const messages = await contract.getMessagesSentTo(deviceId);
+    // Convert BigInt values to strings
+    const messagesStr = {};
+    Object.entries(messages).forEach(([key, value]) => {
+      messagesStr[key] = value.toString();
+    });
+
+    socket.emit("messages_loaded", messagesStr);
+  });
 });
 
 server.listen(process.env.PORT, () =>

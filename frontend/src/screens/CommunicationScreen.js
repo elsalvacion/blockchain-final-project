@@ -2,22 +2,25 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useHistory } from "react-router-dom";
 import { logoutDevice } from "../actions/authAction";
-import { sendMessage } from "../actions/messageAction";
+import { getMessages, sendMessage } from "../actions/messageAction";
 import CustomModal from "../components/layout/CustomModal";
 import { SEND_MESSAGE_RESET } from "../reducers/types/messageTypes";
-
-const CommunicationScreen = ({ socket }) => {
-  const { loading, error, deviceInfo } = useSelector(
-    (state) => state.deviceLogin
-  );
+import { FiRefreshCcw } from "react-icons/fi";
+const CommunicationScreen = ({}) => {
+  const { deviceInfo } = useSelector((state) => state.deviceLogin);
   const {
     loading: sending,
     error: sendingError,
     success,
   } = useSelector((state) => state.sendMessage);
+  const {
+    loading: fetchingMsg,
+    error: fetchingMsgError,
+    messages,
+  } = useSelector((state) => state.getMessages);
   const [sendMsgValues, setSendMsgValues] = useState({
     receiverId: "",
-    bubbleId: "",
+    receiverBubbleId: "",
     message: "",
   });
   const dispatch = useDispatch();
@@ -26,14 +29,14 @@ const CommunicationScreen = ({ socket }) => {
     if (!deviceInfo) {
       history.push("/");
     } else {
-      // socket.emit("")
+      dispatch(getMessages());
     }
   }, [deviceInfo]);
 
   useEffect(() => {
     setSendMsgValues({
       receiverId: "",
-      bubbleId: "",
+      receiverBubbleId: "",
       message: "",
     });
   }, [success]);
@@ -53,62 +56,66 @@ const CommunicationScreen = ({ socket }) => {
           closeModal={() => dispatch({ type: SEND_MESSAGE_RESET })}
         />
       )}
-      <div className="flex items-center justify-end mb-6">
+      <div className="flex items-center justify-between mb-6 border-b border-black">
+        {deviceInfo && (
+          <div className="flex items-center">
+            <h1 className="mx-3 my-2">Device ID: {deviceInfo.deviceId}</h1>
+            <h1 className="mx-3 my-2">Bubble ID: {deviceInfo.bubbleId}</h1>
+          </div>
+        )}
         <button onClick={() => dispatch(logoutDevice())} className="uppercase">
           Logout Device
         </button>
       </div>
       <div className="flex-1 flex flex-col lg:flex-row lg:items-stretch w-full">
         <div className="flex-1 lg:border-r lg:border-green-500 p-3 lg:p-5">
-          <div className="flex items-stretch h-full">
-            <div className="w-4/12 border border-black">
-              <ul>
-                <li className="p-2 cursor-pointer text-sm border-b border-gray-400">
-                  Device ID: 1
-                </li>
-                <li className="p-2 cursor-pointer text-sm border-b border-gray-400">
-                  Device ID: 2
-                </li>
-                <li className="p-2 cursor-pointer text-sm border-b border-gray-400">
-                  Device ID: 1
-                </li>
-                <li className="p-2 cursor-pointer text-sm border-b border-gray-400">
-                  Device ID: 1
-                </li>
-                <li className="p-2 cursor-pointer text-sm border-b border-gray-400">
-                  Device ID: 1
-                </li>
-              </ul>
-            </div>
-            <div className="flex-1 flex flex-col">
-              <div className="flex-1 bg-gray-800 p-2">
-                <div className="p-2 bg-black text-white uppercase">
-                  Device ID: 1
-                </div>
-                <div className="flex-1 overflow-y-auto">
-                  <div className="text-white p-2 rounded-sm bg-orange-800 w-fit px-7 text-left my-3">
-                    <p className="text-sm">Hi</p>
-                  </div>
-                  <div className=" my-3 flex justify-end">
-                    <div className="text-white p-2 rounded-sm bg-red-800 w-fit px-7 text-right flex justify-end">
-                      <p className="text-sm">Hello</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <form className="flex items-stretch">
-                <input
-                  required
-                  type="text"
-                  className="flex-1 border-black border outline-none p-2"
-                  placeholder="Enter message here..."
-                />
-                <button className="bg-gray-200 p-2 px-4 border-none outline-none">
-                  SEND
-                </button>
-              </form>
-            </div>
+          <div className="flex items-center mb-7">
+            <h2 className="text-center uppercase font-bold mr-3 text-2xl">
+              Incoming Messages
+            </h2>
+            <FiRefreshCcw
+              className="text-2xl cursor-pointer"
+              onClick={() => dispatch(getMessages())}
+            />
           </div>
+          <table className="table-fixed border border-black">
+            <thead>
+              <tr className="border border-black">
+                <th className="border border-black p-3">Sender ID</th>
+                <th className="border border-black p-3">BubbleID</th>
+                <th className="border border-black p-3">Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              {messages && Object.keys(messages).length > 0 ? (
+                Object.keys(messages)
+                  .reverse()
+                  .map((key) =>
+                    parseInt(messages[key].split(",")[0]) !== 0 ? (
+                      <tr key={key} className="border border-black">
+                        <td className="border border-black p-3">
+                          {messages[key].split(",")[0]}
+                        </td>
+                        <td className="border border-black p-3">
+                          {messages[key].split(",")[2]}
+                        </td>
+                        <td className="border border-black p-3">
+                          {
+                            messages[key].split(",")[
+                              messages[key].split(",").length - 1
+                            ]
+                          }
+                        </td>
+                      </tr>
+                    ) : null
+                  )
+              ) : (
+                <tr>
+                  <p>No incoming messages</p>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
         <div className="flex-1 p-3 lg:p-5">
           <h2 className="text-center uppercase font-bold mb-7 text-2xl">
@@ -139,11 +146,13 @@ const CommunicationScreen = ({ socket }) => {
                 type="text"
                 className="border-black border outline-none p-2 rounded-sm block w-full"
                 placeholder="Enter device bubble ID"
-                value={sendMsgValues.bubbleId}
+                value={sendMsgValues.receiverBubbleId}
                 onChange={(e) =>
                   setSendMsgValues({
                     ...sendMsgValues,
-                    bubbleId: e.target.value.trim().replace(/[^\d.-]+/g, ""),
+                    receiverBubbleId: e.target.value
+                      .trim()
+                      .replace(/[^\d.-]+/g, ""),
                   })
                 }
               />
@@ -158,7 +167,7 @@ const CommunicationScreen = ({ socket }) => {
                 onChange={(e) =>
                   setSendMsgValues({
                     ...sendMsgValues,
-                    message: e.target.value,
+                    message: e.target.value.replace(/[\,]+/, ""),
                   })
                 }
               ></textarea>

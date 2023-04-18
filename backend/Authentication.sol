@@ -10,6 +10,8 @@ contract Authentication {
     struct Message {
         int256 senderId;
         int256 receiverId;
+        uint256 senderBubbleId;
+        uint256 receiverBubbleId;
         string message;
     }
 
@@ -39,11 +41,11 @@ contract Authentication {
         return true;
     }
 
-    function sendMessage(int256 senderId, int256 receiverId, uint256 bubbleId, string memory message) external {
-        require(devices[int256(bubbleId)][int256(senderId)].passwordHash != 0, "Sender not registered");
-        require(devices[int256(bubbleId)][int256(receiverId)].passwordHash != 0, "Receiver not registered");
-        messages[int256(bubbleId)][int256(senderId)].push(Message(senderId, receiverId, message));
-        messages[int256(bubbleId)][int256(receiverId)].push(Message(senderId, receiverId, message));
+    function sendMessage(int256 senderId, int256 receiverId, uint256 senderBubbleId, uint256 receiverBubbleId, string memory message) external {
+        require(devices[int256(senderBubbleId)][int256(senderId)].passwordHash != 0, "Sender not registered");
+        require(devices[int256(receiverBubbleId)][int256(receiverId)].passwordHash != 0, "Receiver not registered");
+        messages[int256(senderBubbleId)][int256(senderId)].push(Message(senderId, receiverId, senderBubbleId, receiverBubbleId, message));
+        messages[int256(receiverBubbleId)][int256(receiverId)].push(Message(senderId, receiverId, senderBubbleId, receiverBubbleId, message));
     }
 
     function getMessages(int256 deviceId, uint256 bubbleId) external view returns (Message[] memory) {
@@ -51,8 +53,7 @@ contract Authentication {
         return messages[int256(bubbleId)][deviceId];
     }
     
-    function getMessageSentTo(int256 deviceId) external view returns (Message[] memory) {
-        require(devices[0][deviceId].passwordHash != 0, "Device not registered");
+    function getMessagesSentTo(int256 deviceId) external view returns (Message[] memory) {
         uint256 messageCount = 0;
         for (int256 i = 0; i < 100; i++) {
             messageCount += messages[i][deviceId].length;
@@ -62,27 +63,9 @@ contract Authentication {
         for (int256 j = 0; j < 100; j++) {
             Message[] memory msgs = messages[j][deviceId];
             for (uint256 k = 0; k < msgs.length; k++) {
-                result[index] = msgs[k];
-                index++;
-            }
-        }
-        return result;
-    }
-
-     function getDevicesThatSentMessagesTo(int256 deviceId, uint256 bubbleId) external view returns (Device[] memory) {
-        require(devices[int256(bubbleId)][deviceId].passwordHash != 0, "Device not registered");
-        uint256 len = 0;
-        for (int256 i = 0; i < int256(deviceId); i++) {
-            len += messages[int256(bubbleId)][i].length;
-        }
-        Device[] memory result = new Device[](len);
-        uint256 idx = 0;
-        for (int256 i = 0; i < int256(deviceId); i++) {
-            Message[] memory msgs = messages[int256(bubbleId)][i];
-            for (uint256 j = 0; j < msgs.length; j++) {
-                if (msgs[j].receiverId == deviceId) {
-                    result[idx] = devices[int256(bubbleId)][msgs[j].senderId];
-                    idx++;
+                if (msgs[k].receiverId == deviceId) {
+                    result[index] = msgs[k];
+                    index++;
                 }
             }
         }

@@ -2,22 +2,14 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useHistory } from "react-router-dom";
 import { logoutDevice } from "../actions/authAction";
-import { getMessages, sendMessage } from "../actions/messageAction";
 import CustomModal from "../components/layout/CustomModal";
-import { SEND_MESSAGE_RESET } from "../reducers/types/messageTypes";
-import { FiRefreshCcw } from "react-icons/fi";
-const CommunicationScreen = ({}) => {
+const CommunicationScreen = ({ socket }) => {
   const { deviceInfo } = useSelector((state) => state.deviceLogin);
-  const {
-    loading: sending,
-    error: sendingError,
-    success,
-  } = useSelector((state) => state.sendMessage);
-  const {
-    loading: fetchingMsg,
-    error: fetchingMsgError,
-    messages,
-  } = useSelector((state) => state.getMessages);
+
+  const [sending, setSending] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const [messages, setMessages] = useState({});
   const [sendMsgValues, setSendMsgValues] = useState({
     receiverId: "",
     receiverBubbleId: "",
@@ -29,8 +21,9 @@ const CommunicationScreen = ({}) => {
     if (!deviceInfo) {
       history.push("/");
     } else {
-      dispatch(getMessages());
+      socket.emit("get_messages", { deviceId: deviceInfo.deviceId });
     }
+    // eslint-disable-next-line
   }, [deviceInfo]);
 
   useEffect(() => {
@@ -41,9 +34,29 @@ const CommunicationScreen = ({}) => {
     });
   }, [success]);
 
+  useEffect(() => {
+    socket.on("message_sent", () => {
+      setSending(false);
+      setSuccess(true);
+    });
+    socket.on(deviceInfo.deviceId, () => {
+      socket.emit("get_messages", { deviceId: deviceInfo.deviceId });
+    });
+
+    socket.on("messages_loaded", (data) => {
+      setMessages(data);
+    });
+    // eslint-disable-next-line
+  }, []);
+
   const handleSendMsg = (e) => {
     e.preventDefault();
-    dispatch(sendMessage(sendMsgValues));
+    setSending(true);
+    socket.emit("send_message", {
+      ...sendMsgValues,
+      senderId: parseInt(deviceInfo.deviceId),
+      senderBubbleId: parseInt(deviceInfo.bubbleId),
+    });
   };
 
   return (
@@ -53,7 +66,7 @@ const CommunicationScreen = ({}) => {
           text={"Message sent successfully"}
           title={"Message sent"}
           isOpen={success}
-          closeModal={() => dispatch({ type: SEND_MESSAGE_RESET })}
+          closeModal={() => setSuccess(false)}
         />
       )}
       <div className="flex items-center justify-between mb-6 border-b border-black">
@@ -69,15 +82,9 @@ const CommunicationScreen = ({}) => {
       </div>
       <div className="flex-1 flex flex-col lg:flex-row lg:items-stretch w-full">
         <div className="flex-1 lg:border-r lg:border-green-500 p-3 lg:p-5">
-          <div className="flex items-center mb-7">
-            <h2 className="text-center uppercase font-bold mr-3 text-2xl">
-              Incoming Messages
-            </h2>
-            <FiRefreshCcw
-              className="text-2xl cursor-pointer"
-              onClick={() => dispatch(getMessages())}
-            />
-          </div>
+          <h2 className="text-center uppercase font-bold mr-3 text-2xl mb-7">
+            Incoming Messages
+          </h2>
           <table className="table-fixed border border-black">
             <thead>
               <tr className="border border-black">
@@ -167,12 +174,12 @@ const CommunicationScreen = ({}) => {
                 onChange={(e) =>
                   setSendMsgValues({
                     ...sendMsgValues,
+                    // eslint-disable-next-line
                     message: e.target.value.replace(/[\,]+/, ""),
                   })
                 }
               ></textarea>
             </div>
-            {sendingError && <p className="text-red-500">{sendingError}</p>}
             <button
               disabled={sending}
               className="bg-black p-2 text-white uppercase text-center px-10 hover:bg-black/80"

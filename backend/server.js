@@ -127,8 +127,8 @@ io.on("connection", (socket) => {
       message
     );
     await tx.wait();
-
-    socket.emit(String(receiverId));
+    socket.emit("message_sent");
+    io.emit(String(receiverId));
   });
 
   socket.on("get_messages", async (data) => {

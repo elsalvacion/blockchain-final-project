@@ -7,6 +7,8 @@ const CommunicationScreen = ({ socket }) => {
   const { deviceInfo } = useSelector((state) => state.deviceLogin);
 
   const [sending, setSending] = useState(false);
+  const [sendMsgError, setSendMsgError] = useState(false);
+
   const [success, setSuccess] = useState(false);
 
   const [messages, setMessages] = useState({});
@@ -43,6 +45,11 @@ const CommunicationScreen = ({ socket }) => {
       socket.emit("get_messages", { deviceId: deviceInfo.deviceId });
     });
 
+    socket.on("send_message_error", (data) => {
+      setSendMsgError(data.error);
+      setSending(false);
+    });
+
     socket.on("messages_loaded", (data) => {
       setMessages(data);
     });
@@ -67,6 +74,15 @@ const CommunicationScreen = ({ socket }) => {
           title={"Message sent"}
           isOpen={success}
           closeModal={() => setSuccess(false)}
+        />
+      )}
+
+      {sendMsgError && (
+        <CustomModal
+          text={sendMsgError}
+          title={"Could not send message"}
+          isOpen={true}
+          closeModal={() => setSendMsgError(false)}
         />
       )}
       <div className="flex items-center justify-between mb-6 border-b border-black">

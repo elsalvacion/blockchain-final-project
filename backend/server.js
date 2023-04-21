@@ -72,18 +72,31 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   // send message
   socket.on("send_message", async (data) => {
-    const { senderId, receiverId, senderBubbleId, receiverBubbleId, message } =
-      data;
-    const tx = await contract.sendMessage(
-      senderId,
-      receiverId,
-      senderBubbleId,
-      receiverBubbleId,
-      message
-    );
-    await tx.wait();
-    socket.emit("message_sent");
-    io.emit(String(receiverId));
+    try {
+      const {
+        senderId,
+        receiverId,
+        senderBubbleId,
+        receiverBubbleId,
+        message,
+      } = data;
+      const tx = await contract.sendMessage(
+        senderId,
+        receiverId,
+        senderBubbleId,
+        receiverBubbleId,
+        message
+      );
+      await tx.wait();
+      socket.emit("message_sent");
+      io.emit(String(receiverId));
+    } catch (err) {
+      socket.emit("send_message_error", {
+        error: err.info.error.message
+          ? err.info.error.message.split("revert ")[1]
+          : "Blockchain Error",
+      });
+    }
   });
 
   socket.on("get_messages", async (data) => {

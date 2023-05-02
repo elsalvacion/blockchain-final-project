@@ -1,26 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { logoutDevice, registerDevice } from "../actions/authAction";
+import { registerDevice } from "../actions/authAction";
 import CustomModal from "../components/layout/CustomModal";
-import { useHistory } from "react-router-dom";
+import { useHistory, Link } from "react-router-dom";
+import { REGISTER_DEVICE_RESET } from "../reducers/types/authTypes";
+
 const RegisterScreen = () => {
   const dispatch = useDispatch();
   const { loading, error, deviceInfo } = useSelector(
-    (state) => state.deviceLogin
+    (state) => state.deviceRegister
   );
   const [values, setValues] = useState({
     deviceId: "",
     password: "",
-    bubbleId: "",
+    email: "",
   });
 
-  const [openModal, setOpenModal] = useState(false);
   const history = useHistory();
-  useEffect(() => {
-    if (deviceInfo) {
-      history.push("/communication");
-    }
-  }, [deviceInfo]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -29,14 +25,17 @@ const RegisterScreen = () => {
   return (
     <div className="w-full h-full flex items-center justify-center p-3">
       <CustomModal
-        isOpen={openModal}
-        closeModal={() => setOpenModal(false)}
+        isOpen={deviceInfo ? true : false}
+        closeModal={() => {
+          dispatch({ type: REGISTER_DEVICE_RESET });
+          history.push("/");
+        }}
         title="Registration Successful"
-        text={`You have successfully logged in. You will be redirected soon`}
+        text={`Your login details have been sent to the email you provided. Please check you spam folder if it have not appeared in your main inbox.`}
       />
       <CustomModal
         isOpen={error ? true : false}
-        closeModal={() => dispatch(logoutDevice())}
+        closeModal={() => dispatch({ type: REGISTER_DEVICE_RESET })}
         title="Registration Error"
         text={error}
       />
@@ -79,21 +78,27 @@ const RegisterScreen = () => {
             />
           </div>
           <div className="my-7">
-            <label className="mb-2 block">Device Bubble ID</label>
+            <label className="mb-2 block">Your email</label>
             <input
               required
-              type="text"
+              type="email"
               className="border-black border outline-none p-2 rounded-sm block w-full"
-              placeholder="Enter device bubble ID"
+              placeholder="Enter your email"
               value={values.bubbleId}
               onChange={(e) =>
                 setValues({
                   ...values,
-                  bubbleId: e.target.value.trim().replace(/[^\d.-]+/g, ""),
+                  email: e.target.value,
                 })
               }
             />
           </div>
+          <p className="mb-2">
+            Already have an account?{" "}
+            <Link to="/" className="underline">
+              Login
+            </Link>
+          </p>
           <button
             disabled={loading}
             className="bg-black p-2 text-white uppercase text-center px-10 hover:bg-black/80"

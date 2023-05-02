@@ -1,7 +1,10 @@
 import { createStore, applyMiddleware, combineReducers } from "redux";
 import { composeWithDevTools } from "@redux-devtools/extension";
 import thunk from "redux-thunk";
-import { deviceLoginReducer } from "./reducers/authReducer";
+import {
+  deviceLoginReducer,
+  deviceRegisterReducer,
+} from "./reducers/authReducer";
 import {
   getMessageReducer,
   getMessagesReducer,
@@ -10,6 +13,7 @@ import {
 
 const reducers = combineReducers({
   deviceLogin: deviceLoginReducer,
+  deviceRegister: deviceRegisterReducer,
   sendMessage: sendMessageReducer,
   getMessages: getMessagesReducer,
   getMessage: getMessageReducer,

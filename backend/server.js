@@ -6,6 +6,8 @@ const morgan = require("morgan");
 require("dotenv").config();
 const http = require("http");
 const { Server } = require("socket.io"); // Add this
+const { send } = require("process");
+const { sendSingleEmail } = require("./sendEmail");
 
 const app = express();
 app.use(cors());
@@ -18,14 +20,29 @@ const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 const contractAddress = process.env.CONTRACT_ADDRESS;
 const contract = new ethers.Contract(contractAddress, abi, wallet);
 
+function generateBubbleId() {
+  return Math.floor(1 + Math.random() * (50 - 1 + 1));
+}
 app.post("/register", async (req, res) => {
   const deviceId = parseInt(req.body.deviceId);
   const password = parseInt(req.body.password);
-  const bubbleId = parseInt(req.body.bubbleId);
-
+  const bubbleId = generateBubbleId();
   try {
     const tx = await contract.register(deviceId, password, bubbleId);
     const receipt = await provider.waitForTransaction(tx.hash);
+    sendSingleEmail({
+      email: req.body.email,
+      subject: "Registration Successful",
+      message: `
+      <p>Dear user,</p>
+      <p>You device is successfully regsitered</p>
+      <p>Your login details are as follows:</p>
+      <br>
+      <p>Device ID: <b>${deviceId}</b></p>
+      <p>Bubble ID: <b>${bubbleId}</b></p>
+      <p>Password ID: <b>${password}</b></p>
+      `,
+    });
     res.json({ msg: receipt });
   } catch (err) {
     console.error(err);
